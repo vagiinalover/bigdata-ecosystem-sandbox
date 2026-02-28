@@ -1,0 +1,19 @@
+FROM apache/spark:3.5.1-scala2.12-java11-python3-ubuntu
+
+USER root
+
+# Install Jupyter, PySpark and Scala kernel dependencies
+RUN pip install --no-cache-dir jupyter jupyterlab pyspark==3.5.1 toree
+
+# Install Scala kernel
+RUN jupyter toree install --kernel_name=scala --spark_home=/opt/spark
+
+# Create work directory
+RUN mkdir -p /home/jovyan/work
+
+WORKDIR /home/jovyan/work
+
+EXPOSE 8888
+
+# Start Jupyter Lab
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--allow-root", "--NotebookApp.token=''", "--NotebookApp.password=''", "--notebook-dir=/home/jovyan/work"]

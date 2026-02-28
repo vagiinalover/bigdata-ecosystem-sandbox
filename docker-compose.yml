@@ -163,27 +163,45 @@ services:
 
 ## Spark
   spark-master:
-    image: amhhaggag/spark-3.5.1:1.1
+    image: apache/spark:3.5.1-scala2.12-java11-python3-ubuntu
     container_name: spark-master
     hostname: spark-master
     ports:
       - "7080:8080"  # Spark master web UI
       - "7077:7077"  # Spark master port
-    command: org.apache.spark.deploy.master.Master
     environment:
+      - SPARK_MODE=master
       - SPARK_MASTER_HOST=spark-master
+      - SPARK_MASTER_PORT=7077
+      - SPARK_MASTER_WEBUI_PORT=8080
+      - HADOOP_CONF_DIR=/etc/hadoop/conf
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+      --host spark-master
+      --port 7077
+      --webui-port 8080
 
   spark-worker:
-    image: amhhaggag/spark-3.5.1:1.1
+    image: apache/spark:3.5.1-scala2.12-java11-python3-ubuntu
     container_name: spark-worker-1
     hostname: spark-worker-1
     depends_on:
       - spark-master
     ports:
       - "7081:8081"  # Spark worker web UI
-    command: org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     environment:
-      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_PORT=7078
+      - SPARK_WORKER_WEBUI_PORT=8081
+      - HADOOP_CONF_DIR=/etc/hadoop/conf
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077
+      --webui-port 8081
+      --port 7078
 
 ## Airflow
   airflow-db:
@@ -410,6 +428,27 @@ services:
     depends_on:
       - nessie-init
       - postgres
+
+## Jupyter Lab with Python and Scala support
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyter
+    container_name: jupyter
+    user: root
+    ports:
+      - "8888:8888"
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      SPARK_MASTER: spark://spark-master:7077
+      HADOOP_CONF_DIR: /etc/hadoop/conf
+    volumes:
+      - ./mnt/jupyter:/home/jovyan/work
+      - ./sample-data:/home/jovyan/sample-data:ro
+    depends_on:
+      - spark-master
+      - namenode
+    command: jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.token='' --NotebookApp.password='' --notebook-dir=/home/jovyan/work
 
 volumes:
   pg_data: {}
