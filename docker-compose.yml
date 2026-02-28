@@ -377,13 +377,14 @@ services:
     image: postgres:14
     depends_on:
       - postgres
-    command: >
-      bash -c """
-      until pg_isready -h postgres -p 5432; do sleep 2; done;
-      psql -h postgres -U admin -d admin -c 'CREATE DATABASE nessie;';
-      psql -h postgres -U admin -d admin -c \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'nessie') THEN CREATE USER nessie WITH PASSWORD 'nessie'; END IF; END \\$\\$;\";
-      psql -h postgres -U admin -d admin -c 'GRANT ALL PRIVILEGES ON DATABASE nessie TO nessie;'
-      """
+    command:
+      - bash
+      - -c
+      - |
+        until pg_isready -h postgres -p 5432; do sleep 2; done;
+        psql -h postgres -U admin -d admin -c 'CREATE DATABASE nessie;';
+        psql -h postgres -U admin -d admin -c "DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'nessie') THEN CREATE USER nessie WITH PASSWORD 'nessie'; END IF; END $$;";
+        psql -h postgres -U admin -d admin -c 'GRANT ALL PRIVILEGES ON DATABASE nessie TO nessie;'
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
