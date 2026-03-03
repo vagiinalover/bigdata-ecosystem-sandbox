@@ -192,8 +192,8 @@ services:
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_CORES=2
-      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_PORT=7078
       - SPARK_WORKER_WEBUI_PORT=8081
       - HADOOP_CONF_DIR=/etc/hadoop/conf
@@ -202,6 +202,50 @@ services:
       spark://spark-master:7077
       --webui-port 8081
       --port 7078
+
+  spark-worker-2:
+    image: apache/spark:3.5.1-scala2.12-java11-python3-ubuntu
+    container_name: spark-worker-2
+    hostname: spark-worker-2
+    depends_on:
+      - spark-master
+    ports:
+      - "7082:8082"  # Spark worker web UI
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_PORT=7079
+      - SPARK_WORKER_WEBUI_PORT=8082
+      - HADOOP_CONF_DIR=/etc/hadoop/conf
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077
+      --webui-port 8082
+      --port 7079
+
+  spark-worker-3:
+    image: apache/spark:3.5.1-scala2.12-java11-python3-ubuntu
+    container_name: spark-worker-3
+    hostname: spark-worker-3
+    depends_on:
+      - spark-master
+    ports:
+      - "7083:8083"  # Spark worker web UI
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_PORT=7080
+      - SPARK_WORKER_WEBUI_PORT=8083
+      - HADOOP_CONF_DIR=/etc/hadoop/conf
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077
+      --webui-port 8083
+      --port 7080
 
 ## Airflow
   airflow-db:
